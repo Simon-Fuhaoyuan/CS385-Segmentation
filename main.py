@@ -11,7 +11,7 @@ import torch.utils.data as Data
 import torch.optim as optim
 import torchvision.transforms as transforms
 
-from vocData import vocData, 
+from vocData import vocData
 from utils.transform import MaskToTensor
 # from evaluate import accuracy
 # import models
