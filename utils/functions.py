@@ -69,13 +69,17 @@ def test(config, net, device, test_loader, epoch):
         label = label.to(device)
         output = net(img)
         
-        PA += pixel_accuracy(output, label)
-        mPA += mean_pixel_accuracy(output, label)
-        mIoU += mean_IOU(output, label)
+        curr_PA = pixel_accuracy(output, label)
+        curr_mPA = mean_pixel_accuracy(output, label)
+        curr_mIoU = mean_IOU(output, label)
+
+        PA += curr_PA
+        mPA += curr_mPA
+        mIoU += curr_mIoU
 
         if i % config.print_freq == 0:
             logging.info(
-                f'Testing Epoch[{epoch}][{i}/{len(test_loader)}], PA: {PA/(i+1):.3f}, mPA: {mPA/(i+1):.3f}, mIoU: {mIoU/(i+1):.3f}'
+                f'Testing Epoch[{epoch}][{i}/{len(test_loader)}], PA: {curr_PA:.3f}({PA/(i+1):.3f}), mPA: {curr_mPA:.3f}({mPA/(i+1):.3f}), mIoU: {curr_mIoU:.3f}({mIoU/(i+1):.3f})'
             )
     
     return PA / size, mPA / size, mIoU / size

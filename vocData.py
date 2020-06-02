@@ -40,7 +40,7 @@ class vocData(Dataset):
         img_root = os.path.join(self.root, 'JPEGImages')
         mask_root = os.path.join(self.root, 'SegmentationClass')
         data_list = [l.strip('\n') for l in open(os.path.join(
-            root, 'ImageSets', 'Segmentation', self.phase + '.txt')).readlines()]
+            self.root, 'ImageSets', 'Segmentation', self.phase + '.txt')).readlines()]
         for it in data_list:
             item = (os.path.join(img_root, it + '.jpg'), os.path.join(mask_root, it + '.png'))
             items.append(item)

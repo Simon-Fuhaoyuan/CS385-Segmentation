@@ -13,8 +13,7 @@ import torchvision.transforms as transforms
 
 from vocData import vocData
 from utils.transform import MaskToTensor
-# from evaluate import accuracy
-# import models
+import models
 from utils.functions import get_criterion, train, test
 
 
@@ -63,14 +62,14 @@ def main(net, dataloader, device, config):
         ########### TRAIN ##########
         start = time()
         loss_train = train(config, net, device, train_loader, crit, optimizer, epoch)
-        end = time() - end
+        end = time() - start
         logging.info(
             f'=> Epoch[{epoch}] finished, Average train Loss: {loss_train:.3f}, Tot Time: {end:.3f}'
         )
         ########### TEST ###########
         start = time()
         PA, mPA, mIoU = test(config, net, device, test_loader, epoch)
-        end = time() - end
+        end = time() - start
         logging.info(
             f'=> Epoch[{epoch}] Test Result'
         )

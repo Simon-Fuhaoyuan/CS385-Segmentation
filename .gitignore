@@ -1,8 +1,8 @@
 # dataset and course-material
-VOCdevkit/
+VOCdevkit*
 project 2.pdf
 images/
-weights/
+weights*
 trial.py
 
 # Byte-compiled / optimized / DLL files
