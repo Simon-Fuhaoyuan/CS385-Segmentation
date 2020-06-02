@@ -1,5 +1,9 @@
-# dataset
+# dataset and course-material
 VOCdevkit/
+project 2.pdf
+images/
+weights/
+trial.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
