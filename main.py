@@ -57,7 +57,7 @@ def main(net, dataloader, device, config):
 
     if not os.path.isdir(config.weight):
         os.makedirs(config.weight)
-    checkpoint = os.path.join(config.weight, config.model + '.pth')
+    checkpoint = os.path.join(config.weight, config.model)
 
     for epoch in range(config.epoch):
         ########### TRAIN ##########
@@ -77,7 +77,7 @@ def main(net, dataloader, device, config):
         logging.info(
             f'=> Pixel Accuracy: {PA:.3f} | Mean Pixel Accuracy: {mPA:.3f} | Mean IoU: {mIoU:.3f}'
         )
-        torch.save(net.state_dict(), checkpoint)
+        torch.save(net.state_dict(), checkpoint + '_%d.pth'%epoch)
 
 
 if __name__ == '__main__':
