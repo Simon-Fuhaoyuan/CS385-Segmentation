@@ -8,13 +8,14 @@ import matplotlib
 matplotlib.use('AGG')
 import matplotlib.pyplot as plt
 from sklearn import manifold
+from PIL import Image
 
 import torch
 import torch.nn as nn
 import torch.utils.data as Data
 import torch.optim as optim
 
-from utils.evaluate import pixel_accuracy, mean_pixel_accuracy, mean_IOU
+from utils.evaluate import pixel_accuracy, mean_pixel_accuracy, mean_IOU, torch2np
 
 
 ch = logging.StreamHandler(sys.stdout)
@@ -83,3 +84,19 @@ def test(config, net, device, test_loader, epoch):
             )
     
     return PA / size, mPA / size, mIoU / size
+
+def visualize(config, preds, masks, idx):
+    preds, masks = torch2np(preds, masks)
+    pred = preds[0, :, :].astype(np.uint8)
+    mask = masks[0. :, :].astype(np.uint8)
+    pred = Image.fromarray(pred)
+    mask = Image.fromarray(mask)
+
+    if not os.path.isdir(config.image_root):
+        os.makedirs(config.image_root)
+
+    pred_name = os.path.join(config.image_root, config.model + '_%d_pred.png'%idx)
+    mask_name = os.path.join(config.image_root, config.model + '_%d_mask.png'%idx)
+    logging.info(f'Saving {pred_name} and {mask_name}.')
+    pred.save(pred_name)
+    mask.save(mask_name)
