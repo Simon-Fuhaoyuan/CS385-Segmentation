@@ -56,6 +56,7 @@ if __name__ == '__main__':
     net = eval('models.' + config.model + '.get_CNN')(config)
     net.to(device)
     checkpoint = os.path.join(config.weight, config.model + '_%d.pth'%config.load_epoch)
+    logging.info(f'Loading weight parameters from {checkpoint}.')
     net.load_state_dict(torch.load(checkpoint))
 
     # transform of images
