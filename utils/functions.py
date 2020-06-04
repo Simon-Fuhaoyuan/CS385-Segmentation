@@ -86,11 +86,40 @@ def test(config, net, device, test_loader, epoch):
     return PA / size, mPA / size, mIoU / size
 
 def visualize(config, preds, masks, idx):
+    palette=[]
+    for i in range(256):
+        palette.extend((i,i,i))
+    palette[:3*21]=np.array([[0, 0, 0],
+                                [128, 0, 0],
+                                [0, 128, 0],
+                                [128, 128, 0],
+                                [0, 0, 128],
+                                [128, 0, 128],
+                                [0, 128, 128],
+                                [128, 128, 128],
+                                [64, 0, 0],
+                                [192, 0, 0],
+                                [64, 128, 0],
+                                [192, 128, 0],
+                                [64, 0, 128],
+                                [192, 0, 128],
+                                [64, 128, 128],
+                                [192, 128, 128],
+                                [0, 64, 0],
+                                [128, 64, 0],
+                                [0, 192, 0],
+                                [128, 192, 0],
+                                [0, 64, 128]
+                                ], dtype='uint8').flatten()
+
     preds, masks = torch2np(preds, masks)
     pred = preds[0, :, :].astype(np.uint8)
-    mask = masks[0. :, :].astype(np.uint8)
-    pred = Image.fromarray(pred)
-    mask = Image.fromarray(mask)
+    mask = masks[0, :, :].astype(np.uint8)
+
+    pred = Image.fromarray(pred, mode='P')
+    pred.putpalette(palette)
+    mask = Image.fromarray(mask, mode='P')
+    mask.putpalette(palette)
 
     if not os.path.isdir(config.image_root):
         os.makedirs(config.image_root)
