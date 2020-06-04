@@ -4,6 +4,7 @@ project 2.pdf
 images/
 weights*
 trial.py
+log/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

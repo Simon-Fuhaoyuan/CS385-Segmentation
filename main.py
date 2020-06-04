@@ -13,8 +13,9 @@ import torchvision.transforms as transforms
 
 from vocData import vocData
 from utils.transform import MaskToTensor
-import models
 from utils.functions import get_criterion, train, test
+from utils.loss import cross_entropy2d
+import models
 
 
 ch = logging.StreamHandler(sys.stdout)
@@ -51,12 +52,14 @@ def main(net, dataloader, device, config):
         weight_decay=config.weight_decay)
     scheduler = optim.lr_scheduler.ExponentialLR(optimizer, 0.95)
 
-    crit = get_criterion(config, ignore_label=config.ignore_label)
-    crit = crit.to(device)
+    crit = cross_entropy2d
 
     if not os.path.isdir(config.weight):
         os.makedirs(config.weight)
     checkpoint = os.path.join(config.weight, config.model)
+
+    best_epoch = 0
+    best_mIoU = -100
 
     for epoch in range(config.epoch):
         ########### TRAIN ##########
@@ -67,16 +70,23 @@ def main(net, dataloader, device, config):
             f'=> Epoch[{epoch}] finished, Average train Loss: {loss_train:.3f}, Tot Time: {end:.3f}'
         )
         ########### TEST ###########
-        start = time()
         PA, mPA, mIoU = test(config, net, device, test_loader, epoch)
-        end = time() - start
         logging.info(
             f'=> Epoch[{epoch}] Test Result'
         )
         logging.info(
             f'=> Pixel Accuracy: {PA:.3f} | Mean Pixel Accuracy: {mPA:.3f} | Mean IoU: {mIoU:.3f}'
         )
+
+        if mIoU > best_mIoU:
+            best_mIoU = mIoU
+            best_epoch = epoch
+
         torch.save(net.state_dict(), checkpoint + '_%d.pth'%epoch)
+    
+    logging.info(
+        f'Best epoch: {best_epoch}, best mIoU: {best_mIoU:.3f}'
+    )
 
 
 if __name__ == '__main__':
