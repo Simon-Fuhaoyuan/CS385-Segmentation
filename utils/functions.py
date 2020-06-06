@@ -15,7 +15,7 @@ import torch.nn as nn
 import torch.utils.data as Data
 import torch.optim as optim
 
-from utils.evaluate import pixel_accuracy, mean_pixel_accuracy, mean_IOU, torch2np
+from utils.evaluate import pixel_accuracy, mean_pixel_accuracy, mean_IOU, torch2np, fw_IOU
 
 
 ch = logging.StreamHandler(sys.stdout)
@@ -64,6 +64,7 @@ def test(config, net, device, test_loader, epoch):
     PA = 0
     mPA = 0
     mIoU = 0
+    fwIoU = 0
     size = len(test_loader)
     for i, (img, label) in enumerate(test_loader):
         img = img.to(device)
@@ -73,17 +74,19 @@ def test(config, net, device, test_loader, epoch):
         curr_PA = pixel_accuracy(output, label)
         curr_mPA = mean_pixel_accuracy(output, label)
         curr_mIoU = mean_IOU(output, label)
+        curr_fwIoU = fw_IOU(output, label)
 
         PA += curr_PA
         mPA += curr_mPA
         mIoU += curr_mIoU
+        fwIoU += curr_fwIoU
 
         if i % config.print_freq == 0:
             logging.info(
-                f'Testing Epoch[{epoch}][{i}/{len(test_loader)}], PA: {curr_PA:.3f}({PA/(i+1):.3f}), mPA: {curr_mPA:.3f}({mPA/(i+1):.3f}), mIoU: {curr_mIoU:.3f}({mIoU/(i+1):.3f})'
+                f'Testing Epoch[{epoch}][{i}/{len(test_loader)}], PA: {curr_PA:.3f}({PA/(i+1):.3f}), mPA: {curr_mPA:.3f}({mPA/(i+1):.3f}), mIoU: {curr_mIoU:.3f}({mIoU/(i+1):.3f}), fw_IoU: {curr_fwIoU:.3f}({fwIoU/(i+1)})'
             )
     
-    return PA / size, mPA / size, mIoU / size
+    return PA / size, mPA / size, mIoU / size, fwIoU / size
 
 def visualize(config, preds, masks, idx):
     palette=[]

@@ -69,6 +69,29 @@ def mean_IOU(preds, masks):
         IoU += batch_IoU / exist_classes
     
     return IoU / batch_size
+
+def fw_IOU(preds, masks):
+    preds, masks = torch2np(preds, masks)
+    batch_size = masks.shape[0]
+    IoU = 0
+    for i in range(batch_size):
+        pred = preds[i, :, :]
+        mask = masks[i, :, :]
+        n_ignore = (mask == 255).sum()
+        n_pixels = pred.shape[0] * pred.shape[1] - n_ignore
+        batch_IoU = 0
+        for k in range(n_class):
+            pred_class = (pred == k)
+            mask_class = (mask == k)
+            n_mask = mask_class.sum()
+            if n_mask == 0:
+                continue
+            n_pred = pred_class.sum()
+            n_correct = (pred_class & mask_class).sum()
+            batch_IoU += n_correct / (n_mask + n_pred - n_correct) * n_mask / n_pixels
+        IoU += batch_IoU
+    
+    return IoU / batch_size
     
 
 if __name__ == "__main__":

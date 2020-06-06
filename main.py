@@ -30,7 +30,7 @@ def parser_args():
     parser.add_argument('--epoch', help='Total epoches', default=50, type=int)
     parser.add_argument('--batch_size', help='Batch size', default=1, type=int)
     parser.add_argument('--loss', help='The loss function', default='crossentropy', type=str)
-    parser.add_argument('--lr', help='The learning rate', default=0.001, type=float)
+    parser.add_argument('--lr', help='The learning rate', default=0.0001, type=float)
     parser.add_argument('--ignore_label', help='The index of label for ignore', default=255, type=int)
     parser.add_argument('--root', help='The initial dataset root', default='./VOCdevkit/VOC2012', type=str)
     parser.add_argument('--weight', help='The weight folder', default='./weights', type=str)
@@ -70,12 +70,12 @@ def main(net, dataloader, device, config):
             f'=> Epoch[{epoch}] finished, Average train Loss: {loss_train:.3f}, Tot Time: {end:.3f}'
         )
         ########### TEST ###########
-        PA, mPA, mIoU = test(config, net, device, test_loader, epoch)
+        PA, mPA, mIoU, fwIoU = test(config, net, device, test_loader, epoch)
         logging.info(
             f'=> Epoch[{epoch}] Test Result'
         )
         logging.info(
-            f'=> Pixel Accuracy: {PA:.3f} | Mean Pixel Accuracy: {mPA:.3f} | Mean IoU: {mIoU:.3f}'
+            f'=> Pixel Accuracy: {PA:.3f} | Mean Pixel Accuracy: {mPA:.3f} | Mean IoU: {mIoU:.3f} | Freq Weight IoU: {fwIoU:.3f}\n'
         )
 
         if mIoU > best_mIoU:
