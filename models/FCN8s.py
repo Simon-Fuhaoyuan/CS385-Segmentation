@@ -76,10 +76,9 @@ class FCN8s(nn.Module):
                     nn.init.constant_(m.bias, 0)
             if isinstance(m, nn.ConvTranspose2d):
                 assert m.kernel_size[0] == m.kernel_size[1]
-                if isinstance(m, nn.Conv2d):
-                    nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
-                    if m.bias is not None:
-                        nn.init.constant_(m.bias, 0)
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
 
     def forward(self, x):
         h = x
