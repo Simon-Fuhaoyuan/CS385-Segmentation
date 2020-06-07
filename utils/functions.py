@@ -38,28 +38,10 @@ def get_criterion(config, ignore_label=None):
 
     return crit
 
-def train(config, net, device, train_loader, crit, optimizer, epoch):
-    net.train()
-    loss_train = 0.0
-    for i, (img, label) in enumerate(train_loader):
-        img = img.to(device)
-        label = label.to(device)
-        output = net(img)
-        loss = crit(output, label)
-        loss_train += loss.item()
-
-        if i % config.print_freq == 0:
-            logging.info(
-                f'Epoch[{epoch}][{i}/{len(train_loader)}], Train Loss: {loss.item():.3f}({loss_train / (i + 1):.3f})'
-            )
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-    loss_train /= len(train_loader)
-    return loss_train
-
-def test(config, net, device, test_loader, epoch):
+def validate(config, net, device, test_loader):
+    logging.info(
+        f'Start validating...'
+    )
     net.eval()
     PA = 0
     mPA = 0
@@ -81,12 +63,18 @@ def test(config, net, device, test_loader, epoch):
         mIoU += curr_mIoU
         fwIoU += curr_fwIoU
 
-        if i % config.print_freq == 0:
+        if (i + 1) % config.print_freq == 0:
             logging.info(
-                f'Testing Epoch[{epoch}][{i}/{len(test_loader)}], PA: {curr_PA:.3f}({PA/(i+1):.3f}), mPA: {curr_mPA:.3f}({mPA/(i+1):.3f}), mIoU: {curr_mIoU:.3f}({mIoU/(i+1):.3f}), fw_IoU: {curr_fwIoU:.3f}({fwIoU/(i+1)})'
+                f'Testing[{i + 1}/{size}], PA: {curr_PA:.3f}({PA/(i+1):.3f}), mPA: {curr_mPA:.3f}({mPA/(i+1):.3f}), mIoU: {curr_mIoU:.3f}({mIoU/(i+1):.3f}), fw_IoU: {curr_fwIoU:.3f}({fwIoU/(i+1):.3f})'
             )
     
-    return PA / size, mPA / size, mIoU / size, fwIoU / size
+    PA, mPA, mIoU, fwIoU = PA / size, mPA / size, mIoU / size, fwIoU / size
+
+    logging.info(
+            f'=> Pixel Accuracy: {PA:.3f} | Mean Pixel Accuracy: {mPA:.3f} | Mean IoU: {mIoU:.3f} | Freq Weight IoU: {fwIoU:.3f}\n'
+        )
+    
+    return PA, mPA, mIoU, fwIoU
 
 def visualize(config, preds, masks, idx):
     palette=[]

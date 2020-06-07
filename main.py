@@ -13,7 +13,7 @@ import torchvision.transforms as transforms
 
 from vocData import vocData
 from utils.transform import MaskToTensor
-from utils.functions import get_criterion, train, test
+from utils.functions import get_criterion, validate
 from utils.loss import cross_entropy2d
 import models
 
@@ -27,18 +27,19 @@ logging.basicConfig(
 
 def parser_args():
     parser = argparse.ArgumentParser(description='Train Mnist dataset')
-    parser.add_argument('--epoch', help='Total epoches', default=50, type=int)
+    parser.add_argument('--max_iters', help='Total iterations', default=300000, type=int)
+    parser.add_argument('--val_interval', help='The interval for validate', default=1000, type=int)
     parser.add_argument('--batch_size', help='Batch size', default=1, type=int)
     parser.add_argument('--loss', help='The loss function', default='crossentropy', type=str)
-    parser.add_argument('--lr', help='The learning rate', default=0.0001, type=float)
+    parser.add_argument('--lr', help='The learning rate', default=1e-4, type=float)
     parser.add_argument('--ignore_label', help='The index of label for ignore', default=255, type=int)
     parser.add_argument('--root', help='The initial dataset root', default='./VOCdevkit/VOC2012', type=str)
     parser.add_argument('--weight', help='The weight folder', default='./weights', type=str)
     parser.add_argument('--model', help='The architecture of CNN', default='FCN8s', type=str)
-    parser.add_argument('--workers', help='Number of workers when loading data', default=4, type=int)
+    parser.add_argument('--workers', help='Number of workers when loading data', default=1, type=int)
     parser.add_argument('--print_freq', help='Number of iterations to print', default=200, type=int)
-    parser.add_argument('--weight_decay', default=1e-4, type=float)
-    parser.add_argument('--momentum', default=0.9, type=float)
+    parser.add_argument('--weight_decay', default=5e-4, type=float)
+    parser.add_argument('--momentum', default=0.99, type=float)
 
     args = parser.parse_args()
     return args
@@ -57,35 +58,44 @@ def main(net, dataloader, device, config):
     if not os.path.isdir(config.weight):
         os.makedirs(config.weight)
     checkpoint = os.path.join(config.weight, config.model)
+    if config.root[-4:] != '2012': # sbd
+        checkpoint += '_sbd'
 
     best_epoch = 0
     best_mIoU = -100
+    best_others = [0, 0, 0] # PA, mPA, fwIoU
+    iters = 0
 
-    for epoch in range(config.epoch):
-        ########### TRAIN ##########
-        start = time()
-        loss_train = train(config, net, device, train_loader, crit, optimizer, epoch)
-        end = time() - start
-        logging.info(
-            f'=> Epoch[{epoch}] finished, Average train Loss: {loss_train:.3f}, Tot Time: {end:.3f}'
-        )
-        ########### TEST ###########
-        PA, mPA, mIoU, fwIoU = test(config, net, device, test_loader, epoch)
-        logging.info(
-            f'=> Epoch[{epoch}] Test Result'
-        )
-        logging.info(
-            f'=> Pixel Accuracy: {PA:.3f} | Mean Pixel Accuracy: {mPA:.3f} | Mean IoU: {mIoU:.3f} | Freq Weight IoU: {fwIoU:.3f}\n'
-        )
+    while (iters < config.max_iters):
+        for i, (img, label) in enumerate(train_loader):
+            net.train()
+            img = img.to(device)
+            label = label.to(device)
+            output = net(img)
+            loss = crit(output, label)
+            iters += 1
 
-        if mIoU > best_mIoU:
-            best_mIoU = mIoU
-            best_epoch = epoch
+            if iters % config.print_freq == 0:
+                logging.info(
+                    f'Iteration [{iters}/{config.max_iters}], Train Loss: {loss.item():.3f}'
+                )
 
-        torch.save(net.state_dict(), checkpoint + '_%d.pth'%epoch)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            if iters % config.val_interval == 0:
+                PA, mPA, mIoU, fwIoU = validate(config, net, device, test_loader)
+                if mIoU > best_mIoU:
+                    best_mIoU = mIoU
+                    torch.save(net.state_dict(), checkpoint + '_best.pth')
+                    best_others = [PA, mPA, fwIoU]
+
+            if iters == config.max_iters:
+                break
     
     logging.info(
-        f'Best epoch: {best_epoch}, best mIoU: {best_mIoU:.3f}'
+        f'Best performance: PA: {best_others[0]:.3f} | mPA: {best_others[1]:.3f} | mean IU: {best_mIoU:.3f} | freq weight IU: {best_others[2]:.3f}'
     )
 
 
