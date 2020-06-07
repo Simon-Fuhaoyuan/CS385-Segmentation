@@ -1,4 +1,5 @@
 import torch.nn as nn
+from models.utils import get_upsampling_weight
 
 
 class FCN8s(nn.Module):
@@ -76,9 +77,9 @@ class FCN8s(nn.Module):
                     nn.init.constant_(m.bias, 0)
             if isinstance(m, nn.ConvTranspose2d):
                 assert m.kernel_size[0] == m.kernel_size[1]
-                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
-                if m.bias is not None:
-                    nn.init.constant_(m.bias, 0)
+                initial_weight = get_upsampling_weight(
+                    m.in_channels, m.out_channels, m.kernel_size[0])
+                m.weight.data.copy_(initial_weight)
 
     def forward(self, x):
         h = x
