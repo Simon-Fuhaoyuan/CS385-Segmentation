@@ -23,7 +23,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 class vocData(Dataset):
-    def __init__(self, root, phase, transform=None, mask_transform=None):
+    def __init__(self, root, phase, transform=None, mask_transform=None, load_img_name=False):
         assert phase in ['train', 'val'], 'Unknown phase for %s'%phase
 
         self.root = root
@@ -32,6 +32,7 @@ class vocData(Dataset):
         self.transform = transform
         self.mask_transform = mask_transform
         self.imgs = self.make_dataset()
+        self.load_img_name = load_img_name
         logger.info('=> Loading {} images from {}'.format(self.phase, self.root))
         logger.info('=> num_images: {}'.format(len(self.imgs)))
     
@@ -66,8 +67,11 @@ class vocData(Dataset):
             img = self.transform(img)
         if self.mask_transform is not None:
             mask = self.mask_transform(mask)
-
-        return img, mask
+        
+        if self.load_img_name:
+            return img, mask, img_path
+        else:
+            return img, mask
     
     def __len__(self):
         return len(self.imgs)

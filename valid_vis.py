@@ -15,6 +15,7 @@ import torchvision.transforms as transforms
 from vocData import vocData
 from utils.transform import MaskToTensor
 from utils.functions import visualize
+from utils.evaluate import mean_IOU
 import models
 
 
@@ -33,19 +34,20 @@ def parser_args():
     parser.add_argument('--image_root', help='The image folder', default='./images', type=str)
     parser.add_argument('--model', help='The architecture of CNN', default='FCN8s', type=str)
     parser.add_argument('--workers', help='Number of workers when loading data', default=4, type=int)
-    parser.add_argument('--load_epoch', help='The model weight after training which epoch', default=30, type=int)
-    parser.add_argument('--vis_prob', help='The probability of visualizing each image', default=0.1, type=float)
+    parser.add_argument('--checkpoint', help='The model weight', default='weights/FCN8s_best.pth', type=str)
+    parser.add_argument('--vis_iou', help='The minimum iou of shown images', default=0.8, type=float)
 
     args = parser.parse_args()
     return args
 
 def main(net, test_loader, device, config):
     net.eval()
-    for i, (img, label) in enumerate(test_loader):
+    for i, (img, label, name) in enumerate(test_loader):
         img = img.to(device)
         output = net(img)
-        if random.random() < config.vis_prob:
-            visualize(config, output, label, i)
+        iou = mean_IOU(output, label)
+        if iou > config.vis_iou:
+            visualize(config, output, label, i, name[0])
 
 
 if __name__ == '__main__':
@@ -55,7 +57,7 @@ if __name__ == '__main__':
 
     net = eval('models.' + config.model + '.get_CNN')(config)
     net.to(device)
-    checkpoint = os.path.join(config.weight, config.model + '_%d.pth'%config.load_epoch)
+    checkpoint = config.checkpoint
     logging.info(f'Loading weight parameters from {checkpoint}.')
     net.load_state_dict(torch.load(checkpoint))
 
@@ -71,7 +73,8 @@ if __name__ == '__main__':
         config.root, 
         'val', 
         transform=input_transform, 
-        mask_transform=mask_transform)
+        mask_transform=mask_transform, 
+        load_img_name=True)
     test_loader = Data.DataLoader(
         test_dataset, 
         batch_size=config.batch_size, 

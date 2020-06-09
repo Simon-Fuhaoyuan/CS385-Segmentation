@@ -9,6 +9,7 @@ matplotlib.use('AGG')
 import matplotlib.pyplot as plt
 from sklearn import manifold
 from PIL import Image
+from shutil import copyfile
 
 import torch
 import torch.nn as nn
@@ -76,7 +77,7 @@ def validate(config, net, device, test_loader):
     
     return PA, mPA, mIoU, fwIoU
 
-def visualize(config, preds, masks, idx):
+def visualize(config, preds, masks, idx, name):
     palette=[]
     for i in range(256):
         palette.extend((i,i,i))
@@ -117,6 +118,7 @@ def visualize(config, preds, masks, idx):
 
     pred_name = os.path.join(config.image_root, config.model + '_%d_pred.png'%idx)
     mask_name = os.path.join(config.image_root, config.model + '_%d_mask.png'%idx)
+    copyfile(name, os.path.join(config.image_root, config.model + '_%d_init.jpg')%idx)
     logging.info(f'Saving {pred_name} and {mask_name}.')
     pred.save(pred_name)
     mask.save(mask_name)
